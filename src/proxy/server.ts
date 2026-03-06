@@ -1,6 +1,11 @@
 import http, { IncomingMessage, ServerResponse } from "node:http";
 import https from "node:https";
 import { createMiddlewareChain, type Middleware } from "./middleware.js";
+import { createGitignoreMiddleware } from "./gitignore-middleware.js";
+
+export interface ProxyServerOptions {
+  gitignoreMiddleware?: boolean;
+}
 
 const PROXY_PORT = 18080;
 
@@ -47,14 +52,17 @@ export class ProxyServer {
   private server: http.Server | null = null;
   private upstream: string | null = null;
 
-  start(upstream: string): Promise<void> {
+  start(upstream: string, options: ProxyServerOptions = {}): Promise<void> {
     this.upstream = upstream;
 
     return new Promise((resolve, reject) => {
       const getUpstream = () => this.upstream;
 
-      // Future middlewares can be prepended here (e.g. pathBlockMiddleware)
-      const middlewares: Middleware[] = [forwardMiddleware(getUpstream)];
+      const middlewares: Middleware[] = [];
+      if (options.gitignoreMiddleware) {
+        middlewares.push(createGitignoreMiddleware(getUpstream));
+      }
+      middlewares.push(forwardMiddleware(getUpstream));
 
       const handler = createMiddlewareChain(middlewares);
 

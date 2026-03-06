@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ngrok__ngrok_stop",
+      "mcp__ngrok__ngrok_start"
+    ]
+  }
+}

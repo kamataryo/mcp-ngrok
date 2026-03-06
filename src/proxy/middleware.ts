@@ -4,7 +4,7 @@ export type Middleware = (
   req: IncomingMessage,
   res: ServerResponse,
   next: () => void
-) => void;
+) => void | Promise<void>;
 
 export function createMiddlewareChain(middlewares: Middleware[]) {
   return (req: IncomingMessage, res: ServerResponse): void => {
@@ -13,7 +13,12 @@ export function createMiddlewareChain(middlewares: Middleware[]) {
     const next = () => {
       const mw = middlewares[index++];
       if (mw) {
-        mw(req, res, next);
+        Promise.resolve(mw(req, res, next)).catch((err) => {
+          if (!res.headersSent) {
+            res.writeHead(500);
+            res.end(`Internal Server Error: ${err.message}`);
+          }
+        });
       }
     };
 
