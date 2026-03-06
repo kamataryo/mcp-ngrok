@@ -9,6 +9,18 @@ export interface ProxyServerOptions {
 
 const PROXY_PORT = 18080;
 
+function blockDotGitMiddleware(): Middleware {
+  return (req, res, next) => {
+    const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+    if (pathname === "/.git" || pathname.startsWith("/.git/")) {
+      res.writeHead(403);
+      res.end("Forbidden");
+      return;
+    }
+    next();
+  };
+}
+
 function forwardMiddleware(getUpstream: () => string | null): Middleware {
   return (req, res, _next) => {
     const upstream = getUpstream();
@@ -58,7 +70,7 @@ export class ProxyServer {
     return new Promise((resolve, reject) => {
       const getUpstream = () => this.upstream;
 
-      const middlewares: Middleware[] = [];
+      const middlewares: Middleware[] = [blockDotGitMiddleware()];
       if (options.gitignoreMiddleware) {
         middlewares.push(createGitignoreMiddleware(getUpstream));
       }

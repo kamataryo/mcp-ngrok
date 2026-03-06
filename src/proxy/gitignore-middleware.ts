@@ -11,17 +11,27 @@ function fetchGitignore(upstream: string): Promise<Ignore> {
     const req = mod.get(url, (res) => {
       if (res.statusCode !== 200) {
         res.resume();
-        resolve(ignore());
+        resolve(
+          // @ts-ignore
+          ignore()
+        );
         return;
       }
 
       let body = "";
       res.setEncoding("utf8");
       res.on("data", (chunk) => { body += chunk; });
-      res.on("end", () => { resolve(ignore().add(body)); });
+      res.on("end", () => { resolve(
+        // @ts-ignore
+        ignore()
+          .add(body)
+      ); });
     });
 
-    req.on("error", () => { resolve(ignore()); });
+    req.on("error", () => { resolve(
+      // @ts-ignore
+      ignore());
+    });
   });
 }
 
